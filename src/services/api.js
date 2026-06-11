@@ -21,8 +21,24 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Response interceptor to handle 401 Unauthorized errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      window.location.href = '/';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const authService = {
   login: (data) => api.post('/auth/login', data),
+  getMe: () => api.get('/auth/me'),
+  changePassword: (data) => api.post('/auth/change-password', data),
+  uploadAvatar: (formData) => api.post('/auth/upload-avatar', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
 };
 
 export const itemService = {
@@ -62,6 +78,7 @@ export const bookingService = {
   update: (id, data) => api.put(`/bookings/${id}`, data),
   delete: (id) => api.delete(`/bookings/${id}`),
   approve: (id) => api.post(`/bookings/${id}/approve`),
+  reject: (id) => api.post(`/bookings/${id}/reject`),
   getShareCodes: () => api.get('/share-codes'),
   getDepartments: () => api.get('/departments'),
   migrateQurbani: () => api.get('/migrate-qurbani'),
@@ -70,6 +87,9 @@ export const bookingService = {
   getCollectionSummary: () => api.get('/bookings/collection-summary'),
   getComparisonSummary: () => api.get('/bookings/comparison-summary'),
   markSharesQurbaniDone: (data) => api.post('/qurbani-shares/mark-done', data),
+  bulkApprove: (ids) => api.post('/bookings/bulk-approve', { ids }),
+  searchByRegNo: (q) => api.get('/bookings/search', { params: { q } }),
+  updateCompany: (data) => api.put('/company', data),
 };
 
 export const qurbaniDateService = {
