@@ -98,7 +98,8 @@ const CompanySettingsPage = ({ user }) => {
                   placeholder="contact@organisation.org"
                   value={formData.email}
                   onChange={e => setFormData({ ...formData, email: e.target.value })}
-                  className="premium-input w-full pl-10"
+                  className="premium-input w-full"
+                  style={{ paddingLeft: '40px' }}
                 />
                 <Mail size={16} className="text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               </div>
@@ -112,7 +113,7 @@ const CompanySettingsPage = ({ user }) => {
                   placeholder="+91 XXXXX XXXXX"
                   value={formData.phone}
                   onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                  className="premium-input w-full pl-10"
+                  className="premium-input w-full" style={{ paddingLeft: '40px' }}
                 />
                 <Phone size={16} className="text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               </div>
@@ -126,7 +127,7 @@ const CompanySettingsPage = ({ user }) => {
                   placeholder="e.g. India"
                   value={formData.country}
                   onChange={e => setFormData({ ...formData, country: e.target.value })}
-                  className="premium-input w-full pl-10"
+                  className="premium-input w-full" style={{ paddingLeft: '40px' }}
                 />
                 <Globe size={16} className="text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               </div>
@@ -142,7 +143,7 @@ const CompanySettingsPage = ({ user }) => {
                   placeholder="Street No. 4, Block C"
                   value={formData.address}
                   onChange={e => setFormData({ ...formData, address: e.target.value })}
-                  className="premium-input w-full pl-10"
+                  className="premium-input w-full" style={{ paddingLeft: '40px' }}
                 />
                 <MapPin size={16} className="text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               </div>

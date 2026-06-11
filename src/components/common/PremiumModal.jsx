@@ -150,11 +150,25 @@ export const SaveBtn = ({ loading, label, loadingLabel = 'Saving...', accent = '
 );
 
 /** Premium read-only detail row */
-export const DetailRow = ({ label, value, span = false }) => (
-  <div style={{ display:'flex',flexDirection:'column',gap:6, gridColumn: span ? '1/-1' : undefined }}>
-    <span style={{ fontSize:11,fontWeight:700,color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.06em' }}>{label}</span>
-    <span style={{ fontSize:14,fontWeight:600,color:'#1e293b',background:'#f8fafc',padding:'10px 14px',borderRadius:12,border:'1px solid #e8edf3',lineHeight:1.4 }}>{value || '—'}</span>
-  </div>
-);
+export const DetailRow = ({ label, value, span = false }) => {
+  const colors = ['#6366f1', '#10b981', '#f59e0b', '#8b5cf6', '#0ea5e9', '#ec4899', '#f43f5e', '#14b8a6'];
+  const hash = label.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const accent = colors[hash % colors.length];
+
+  return (
+    <div style={{ 
+      background: '#ffffff', 
+      border: '1px solid #e2e8f0', 
+      borderRadius: '14px', 
+      padding: '14px 16px', 
+      borderLeft: `3px solid ${accent}`,
+      boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+      gridColumn: span ? '1/-1' : undefined
+    }}>
+      <div style={{ fontSize: '10px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>{label}</div>
+      <div style={{ fontSize: '14px', fontWeight: '700', color: '#0f172a', wordBreak: 'break-word', lineHeight: 1.4 }}>{value || '—'}</div>
+    </div>
+  );
+};
 
 export default PremiumModal;

@@ -212,7 +212,7 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
     const count = parseInt(formData.total_shares) || 0;
     const selectedShare = shareCodes.find(s => s.code === formData.share_code);
     const defaultPrice = selectedShare ? parseFloat(selectedShare.price) : 0;
-    const defaultDept = departments.length > 0 ? departments[0].dept_name : '';
+    const defaultDept = '';
 
     let hasChanges = false;
     const currentShares = [...shares];
@@ -685,7 +685,7 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
         booking_date: '',
         qurbani_date: ''
       });
-      setShares([{ beneficiary_name: '', beneficiary_mobile: '', objective: departments[0]?.dept_name || '', amount: 0, share_reg_no: '' }]);
+      setShares([{ beneficiary_name: '', beneficiary_mobile: '', objective: '', amount: 0, share_reg_no: '' }]);
 
       setEditingId(null);
       setErrors({});
@@ -1474,6 +1474,7 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
                                   style={{ width: '100%', padding: '8px 10px', border: errors.shares?.[i]?.objective ? '1px solid #f43f5e' : '1px solid #e2e8f0', borderRadius: '8px', fontSize: '13px', background: '#fff', boxSizing: 'border-box', outline: 'none', cursor: 'pointer', fontFamily: 'inherit', transition: 'border-color 0.15s' }}
                                   onFocus={e => e.target.style.borderColor = errors.shares?.[i]?.objective ? '#f43f5e' : '#6366f1'}
                                   onBlur={e => e.target.style.borderColor = errors.shares?.[i]?.objective ? '#f43f5e' : '#e2e8f0'}>
+                                  <option value="">Select Department</option>
                                   {departments.length > 0 ? departments.map(d => <option key={d.id} value={d.dept_name}>{d.dept_name}</option>) : <option disabled>Loading...</option>}
                                 </select>
                                 {errors.shares?.[i]?.objective && <span style={{ display: 'block', color: '#f43f5e', fontSize: '9px', fontWeight: 'bold', marginTop: '2px' }}>{errors.shares[i].objective}</span>}
