@@ -16,23 +16,22 @@ const PageControlPanel = ({
   addLabel = 'Create New',
   extraActions,
 }) => {
-  const hasActiveFilters = 
-    (searchTerm && searchTerm.trim() !== '') || 
+  const hasActiveFilters =
+    (searchTerm && searchTerm.trim() !== '') ||
     Object.values(filters).some(val => val !== null && val !== undefined && val !== '');
 
   const handleReset = () => {
     if (onSearchChange) onSearchChange('');
     if (onFilterChange) {
       const resetFilters = {};
-      Object.keys(filters).forEach(key => {
-        resetFilters[key] = '';
-      });
+      Object.keys(filters).forEach(key => { resetFilters[key] = ''; });
       onFilterChange(resetFilters);
     }
   };
 
   return (
     <div className="flex flex-col gap-4 w-full mb-4">
+
       {/* ── Page Title & Actions Header ── */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white/50 backdrop-blur-md border border-slate-200/80 p-4 rounded-2xl shadow-sm">
         <div className="flex items-center gap-3">
@@ -46,9 +45,7 @@ const PageControlPanel = ({
               {title}
             </h1>
             {subtitle && (
-              <p className="text-[11px] text-slate-400 font-medium mt-1">
-                {subtitle}
-              </p>
+              <p className="text-[11px] text-slate-400 font-medium mt-1">{subtitle}</p>
             )}
           </div>
         </div>
@@ -71,38 +68,27 @@ const PageControlPanel = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {stats.map((stat, i) => {
             const StatIcon = stat.icon;
-            // Provide gorgeous defaults if color palette is missing
-            const themeColor = stat.color || '#10b981';
-            const themeBg = stat.bg || '#ecfdf5';
+            const themeColor  = stat.color  || '#10b981';
+            const themeBg     = stat.bg     || '#ecfdf5';
             const themeBorder = stat.border || 'rgba(16, 185, 129, 0.15)';
-            
             return (
               <div
                 key={stat.label || i}
                 className="premium-card relative overflow-hidden p-3.5 flex items-center gap-3.5 group transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md border border-slate-200/60 bg-white"
-                style={{
-                  borderLeft: `4px solid ${themeColor}`
-                }}
+                style={{ borderLeft: `4px solid ${themeColor}` }}
               >
-                {/* Background decorative blob */}
-                <div 
+                <div
                   className="absolute -right-4 -bottom-4 w-20 h-20 rounded-full opacity-[0.03] group-hover:scale-125 transition-transform duration-500"
                   style={{ backgroundColor: themeColor }}
                 />
-
                 {StatIcon && (
-                  <div 
+                  <div
                     className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-105"
-                    style={{ 
-                      backgroundColor: themeBg, 
-                      color: themeColor,
-                      border: `1px solid ${themeBorder}`
-                    }}
+                    style={{ backgroundColor: themeBg, color: themeColor, border: `1px solid ${themeBorder}` }}
                   >
                     <StatIcon size={16} />
                   </div>
                 )}
-                
                 <div className="flex-1 min-w-0">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">
                     {stat.label}
@@ -112,9 +98,11 @@ const PageControlPanel = ({
                       <AnimatedCounter value={stat.value} />
                     </span>
                     {stat.change && (
-                      <span 
+                      <span
                         className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${
-                          stat.changeType === 'increase' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-500'
+                          stat.changeType === 'increase'
+                            ? 'bg-emerald-50 text-emerald-600'
+                            : 'bg-rose-50 text-rose-500'
                         }`}
                       >
                         {stat.change}
@@ -129,8 +117,9 @@ const PageControlPanel = ({
       )}
 
       {/* ── Unified Filter Panel ── */}
-      <div className="bg-white/80 backdrop-blur-md border border-slate-200/80 p-3 rounded-2xl shadow-sm flex flex-col md:flex-row gap-2.5 items-center">
-        {/* Search Input Box */}
+      <div className="bg-white/80 backdrop-blur-md border border-slate-200/80 p-3 rounded-2xl shadow-sm flex flex-col md:flex-row gap-2.5 items-center flex-wrap">
+
+        {/* Search Input */}
         {onSearchChange !== undefined && (
           <div className="relative w-full md:flex-1">
             <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -155,10 +144,12 @@ const PageControlPanel = ({
         {/* Dropdown Filters */}
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           {Object.keys(filterOptions).map(key => {
-            const options = filterOptions[key] || [];
-            const value = filters[key] || '';
-            const placeholder = `All ${key.charAt(0).toUpperCase() + key.slice(1)}`;
-
+            const options     = filterOptions[key] || [];
+            const value       = filters[key] || '';
+            let placeholder = `All ${key.charAt(0).toUpperCase() + key.slice(1)}`;
+            if (key === 'dateRange') placeholder = 'All Time';
+            if (key === 'paymentMode') placeholder = 'All Payment Mode';
+            
             return (
               <div key={key} className="relative w-full sm:w-auto flex-1 sm:flex-initial">
                 <select
@@ -168,19 +159,15 @@ const PageControlPanel = ({
                 >
                   <option value="">{placeholder}</option>
                   {options.map(opt => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
-                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[9px]">
-                  ▼
-                </div>
+                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[9px]">▼</div>
               </div>
             );
           })}
 
-          {/* Reset Filters Action */}
+          {/* Reset All Filters */}
           {hasActiveFilters && (
             <button
               onClick={handleReset}

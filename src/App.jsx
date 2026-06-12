@@ -8,7 +8,6 @@ import BookingManagement from './pages/bookings/BookingPage';
 import PaymentList from './pages/bookings/PaymentListPage';
 import QurbaniDateMaster from './pages/qurbani/QurbaniDateMasterPage';
 import DepartmentMaster from './pages/departments/DepartmentMasterPage';
-import PendingCartList from './pages/bookings/PendingCartPage';
 import QurbaniCollection from './pages/qurbani/QurbaniCollectionPage';
 import QurbaniComparison from './pages/qurbani/QurbaniComparisonPage';
 import OnlinePendingList from './pages/bookings/OnlinePendingPage';
@@ -19,6 +18,7 @@ import DashboardPage from './pages/DashboardPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ProfilePage from './pages/settings/ProfilePage';
 import CompanySettingsPage from './pages/settings/CompanySettingsPage';
+import ReportsPage from './pages/reports/ReportsPage';
 import { authService } from './services/api';
 import CommandPalette from './components/common/CommandPalette';
 
@@ -596,12 +596,6 @@ function App() {
                 </>
               } />
 
-              <Route path="/bookings/pending" element={
-                <>
-                  {/* <header className="mb-6"><h1 className="text-[22px] font-bold font-outfit text-slate-800 tracking-tight">Pending Cart List</h1></header> */}
-                  <PendingCartList user={user} />
-                </>
-              } />
 
               <Route path="/bookings/collection" element={
                 isAdmin ? <QurbaniCollection /> : <Navigate to="/dashboard" replace />
@@ -797,6 +791,10 @@ function App() {
 
               <Route path="/settings/company" element={
                 isAdmin ? <CompanySettingsPage user={user} /> : <Navigate to="/dashboard" replace />
+              } />
+
+              <Route path="/reports" element={
+                isAdmin ? <ReportsPage user={user} /> : <Navigate to="/dashboard" replace />
               } />
 
               <Route path="*" element={<NotFoundPage />} />

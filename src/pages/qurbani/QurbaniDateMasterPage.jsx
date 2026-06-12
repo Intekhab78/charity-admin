@@ -126,26 +126,17 @@ const QurbaniDateMaster = ({ viewMode = 'list' }) => {
               <p className="tbl-subtitle">{dates.length} total dates — configure available sacrifice dates</p>
             </div>
           </div>
-          <div className="tbl-hero-right">
+          <div className="tbl-hero-right flex items-center gap-3">
+            <div className="export-buttons">
+              <button onClick={() => { const r = dates.map((d, i) => [i + 1, d.id, d.qurbani_date, d.actual_date || '', d.description || '', d.status === 1 ? 'Active' : 'Inactive'].join('\t')).join('\n'); navigator.clipboard.writeText('S.No\tID\tQurbani Date\tCalendar Date\tDescription\tStatus\n' + r).then(() => toast.success('Copied!')); }} className="export-btn">Copy</button>
+              <button onClick={() => { const h = ['SNo.', 'ID', 'QURBANI DATE', 'CALENDAR DATE', 'DESCRIPTION', 'STATUS']; const r = dates.map((d, i) => [i + 1, d.id, `"${d.qurbani_date}"`, d.actual_date || '', `"${d.description || ''}"`, d.status === 1 ? 'Active' : 'Inactive'].join(',')); const c = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(h.join(',') + '\n' + r.join('\n')); const a = document.createElement('a'); a.href = c; a.download = 'qurbani_dates.csv'; a.click(); }} className="export-btn">CSV</button>
+            </div>
             <button onClick={() => navigate('/qurbani-dates/add')} className="tbl-new-btn"><Plus size={16} /> Add New Date</button>
           </div>
         </div>
         <div className="tbl-divider" />
 
-        <div className="table-controls">
-          <div className="table-controls-left">
-            <div className="show-entries">
-              <span>Show</span>
-              <select value={entriesPerPage} onChange={e => { setEntriesPerPage(Number(e.target.value)); setCurrentPage(1); }}>
-                {[10, 25, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
-              </select>
-              <span>entries</span>
-            </div>
-            <div className="export-buttons">
-              <button onClick={() => { const r = dates.map((d, i) => [i + 1, d.id, d.qurbani_date, d.actual_date || '', d.description || '', d.status === 1 ? 'Active' : 'Inactive'].join('\t')).join('\n'); navigator.clipboard.writeText('S.No\tID\tQurbani Date\tCalendar Date\tDescription\tStatus\n' + r).then(() => toast.success('Copied!')); }} className="export-btn">Copy</button>
-              <button onClick={() => { const h = ['SNo.', 'ID', 'QURBANI DATE', 'CALENDAR DATE', 'DESCRIPTION', 'STATUS']; const r = dates.map((d, i) => [i + 1, d.id, `"${d.qurbani_date}"`, d.actual_date || '', `"${d.description || ''}"`, d.status === 1 ? 'Active' : 'Inactive'].join(',')); const c = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(h.join(',') + '\n' + r.join('\n')); const a = document.createElement('a'); a.href = c; a.download = 'qurbani_dates.csv'; a.click(); }} className="export-btn">CSV</button>
-            </div>
-          </div>
+        <div className="table-controls justify-end">
           <div className="search-box">
             <Search size={16} />
             <input value={searchTerm} onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }} placeholder="Search dates..." />

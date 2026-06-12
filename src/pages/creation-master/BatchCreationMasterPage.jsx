@@ -151,19 +151,7 @@ const BatchCreationMasterPage = () => {
 
   const totalPages = Math.ceil(filteredRecords.length / entriesPerPage) || 1;
 
-  const handleExportCopy = () => {
-    const headers = batchColumns.map(([, l]) => l).join('\t');
-    const rows = filteredRecords.map(r => batchColumns.map(([k]) => r[k] ?? '').join('\t')).join('\n');
-    navigator.clipboard.writeText(`${headers}\n${rows}`).then(() => toast.success('Copied!')).catch(() => toast.error('Failed to copy.'));
-  };
 
-  const handleExportCSV = () => {
-    const headers = batchColumns.map(([, l]) => `"${l}"`).join(',');
-    const rows = filteredRecords.map(r => batchColumns.map(([k]) => `"${String(r[k] ?? '').replace(/"/g, '""')}"`).join(','));
-    const csv = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(headers + '\n' + rows.join('\n'));
-    const a = document.createElement('a'); a.href = csv; a.download = 'batches.csv'; a.click();
-    toast.success('Downloaded CSV.');
-  };
 
   /* ─── Premium Modal Form ────────────────────────────────────────── */
   const formPanel = showForm && (
@@ -376,8 +364,18 @@ const BatchCreationMasterPage = () => {
         setSearchTerm={setSearchTerm}
         entriesPerPage={entriesPerPage}
         setEntriesPerPage={setEntriesPerPage}
-        onExportCSV={handleExportCSV}
-        onExportCopy={handleExportCopy}
+        exportConfig={{
+          filename: 'batches_master',
+          title: 'Batch Master',
+          columns: batchColumns.map(([dataKey, header]) => ({ header, dataKey })),
+          data: filteredRecords.map(r => {
+            const rowData = {};
+            batchColumns.forEach(([k]) => {
+              rowData[k] = r[k];
+            });
+            return rowData;
+          })
+        }}
         table={
           <>
             <CreationMasterTable columns={batchColumns} records={paginatedRecords} onEdit={startEdit} onDelete={id => setDeleteConfirmId(id)} />

@@ -196,29 +196,18 @@ const OnlinePendingList = ({ user }) => {
               <p className="tbl-subtitle">{bookings.length} total transaction{bookings.length !== 1 ? 's' : ''} &mdash; verify and settle digital payments</p>
             </div>
           </div>
-        </div>
-
-        <div className="tbl-divider"></div>
-
-        {/* Controls */}
-        <div className="table-controls">
-          <div className="table-controls-left">
-            <div className="show-entries">
-              <span>Show</span>
-              <select 
-                value={entriesPerPage} 
-                onChange={e => { setEntriesPerPage(Number(e.target.value)); setCurrentPage(1); }}
-                className="border border-slate-200 rounded-lg p-1 text-xs font-bold text-slate-700 bg-white"
-              >
-                {[10, 25, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
-              </select>
-              <span>entries</span>
-            </div>
+          <div className="tbl-hero-right">
             <div className="export-buttons">
               <button className="export-btn font-semibold" onClick={handleCopyClipboard}>Copy</button>
               <button className="export-btn font-semibold" onClick={handleCSVExport}>CSV</button>
             </div>
           </div>
+        </div>
+
+        <div className="tbl-divider"></div>
+
+        {/* Controls */}
+        <div className="table-controls justify-end">
           <div className="search-box">
             <Search size={16} />
             <input 

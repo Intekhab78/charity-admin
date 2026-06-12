@@ -8,6 +8,7 @@ import ConfirmModal from '../../components/common/ConfirmModal';
 import Pagination from '../../components/common/Pagination';
 import TableSkeleton from '../../components/common/TableSkeleton';
 import PremiumModal, { pmLabel, pmInput, CancelBtn, SaveBtn, DetailRow } from '../../components/common/PremiumModal';
+import ExportButtons from '../../components/common/ExportButtons';
 
 const ACCENT      = '#3b82f6';
 const ACCENT_DARK = '#2563eb';
@@ -174,24 +175,31 @@ const CustomerManagement = ({ user, viewMode = 'list' }) => {
         filters={filters} onFilterChange={f => { setFilters(f); setCurrentPage(1); }}
         filterOptions={{ city: cityOptions }}
         onAddClick={() => navigate('/customers/add')} addLabel="New Customer"
+        extraActions={
+          <ExportButtons 
+            filename="customers_database" 
+            title="Customers" 
+            columns={[
+              { header: 'SNo.', dataKey: 'sno' },
+              { header: 'CODE', dataKey: 'code' },
+              { header: 'CUSTOMER NAME', dataKey: 'name' },
+              { header: 'PHONE', dataKey: 'phone' },
+              { header: 'EMAIL', dataKey: 'email' },
+              { header: 'CITY', dataKey: 'city' }
+            ]}
+            data={customers.map((c, i) => ({
+              sno: i + 1,
+              code: c.customer_code,
+              name: c.trn_name,
+              phone: c.customer_phone,
+              email: c.customer_email || '',
+              city: c.customer_city || ''
+            }))}
+          />
+        }
       />
 
       <div className="list-table-container">
-        <div className="table-controls">
-          <div className="table-controls-left">
-            <div className="show-entries">
-              <span>Show</span>
-              <select value={entriesPerPage} onChange={e => { setEntriesPerPage(Number(e.target.value)); setCurrentPage(1); }}>
-                {[10, 25, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
-              </select>
-              <span>entries</span>
-            </div>
-            <div className="export-buttons">
-              <button onClick={() => { const r = customers.map((c, i) => [i + 1, c.customer_code, c.trn_name, c.customer_phone, c.customer_email || '', c.customer_city || ''].join('\t')).join('\n'); navigator.clipboard.writeText('S.No\tCode\tName\tPhone\tEmail\tCity\n' + r).then(() => toast.success('Copied!')).catch(() => toast.error('Failed.')); }} className="export-btn">Copy</button>
-              <button onClick={() => { const h = ['SNo.', 'CODE', 'CUSTOMER NAME', 'PHONE', 'EMAIL', 'CITY']; const r = customers.map((c, i) => [i + 1, c.customer_code, `"${c.trn_name}"`, c.customer_phone, c.customer_email || '', c.customer_city || ''].join(',')); const csv = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(h.join(',') + '\n' + r.join('\n')); const a = document.createElement('a'); a.href = csv; a.download = 'customers.csv'; a.click(); }} className="export-btn">CSV</button>
-            </div>
-          </div>
-        </div>
 
         <div className="data-table-wrapper">
           <table className="dense-data-table">

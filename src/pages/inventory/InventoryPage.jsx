@@ -7,6 +7,7 @@ import PageControlPanel from '../../components/common/PageControlPanel';
 import Pagination from '../../components/common/Pagination';
 import TableSkeleton from '../../components/common/TableSkeleton';
 import PremiumModal, { pmLabel, pmInput, CancelBtn, SaveBtn, DetailRow } from '../../components/common/PremiumModal';
+import ExportButtons from '../../components/common/ExportButtons';
 
 const DEFAULT_COMPANY_ID = import.meta.env.VITE_DEFAULT_COMPANY_ID || '';
 
@@ -147,33 +148,36 @@ const InventoryTable = ({ user, viewMode = 'list' }) => {
         filters={filters} onFilterChange={f => { setFilters(f); setCurrentPage(1); }}
         filterOptions={{ priceRange: [{ label: 'Under ₹5,000', value: 'low' }, { label: '₹5,000 - ₹15,000', value: 'mid' }, { label: '₹15,000 & Above', value: 'high' }] }}
         onAddClick={isAdmin ? () => navigate('/inventory/add') : null} addLabel="New Item"
+        extraActions={
+          <ExportButtons 
+            filename="inventory_items" 
+            title="Inventory Items" 
+            columns={[
+              { header: 'SNo.', dataKey: 'sno' },
+              { header: 'ITEM CODE', dataKey: 'item_code' },
+              { header: 'ITEM NAME', dataKey: 'item_name' },
+              { header: 'PRICE', dataKey: 'itemprice' }
+            ]}
+            data={items.map((i, idx) => ({
+              sno: idx + 1,
+              item_code: i.item_code,
+              item_name: i.item_name || i.itemdesc,
+              itemprice: i.itemprice
+            }))}
+          />
+        }
       />
 
       <div className="list-table-container">
-        <div className="table-controls">
-          <div className="table-controls-left">
-            <div className="show-entries">
-              <span>Show</span>
-              <select value={entriesPerPage} onChange={e => { setEntriesPerPage(Number(e.target.value)); setCurrentPage(1); }}>
-                {[10, 25, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
-              </select>
-              <span>entries</span>
-            </div>
-            <div className="export-buttons">
-              <button onClick={() => { const r = items.map((i, idx) => [idx + 1, i.item_code, i.item_name || i.itemdesc, i.itemprice].join('\t')).join('\n'); navigator.clipboard.writeText('S.No\tItem Code\tName\tPrice\n' + r).then(() => toast.success('Copied!')).catch(() => toast.error('Failed.')); }} className="export-btn">Copy</button>
-              <button onClick={() => { const h = ['SNo.', 'ITEM CODE', 'ITEM NAME', 'PRICE']; const r = items.map((i, idx) => [idx + 1, i.item_code, `"${i.item_name || i.itemdesc}"`, i.itemprice].join(',')); const c = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(h.join(',') + '\n' + r.join('\n')); const a = document.createElement('a'); a.href = c; a.download = 'inventory.csv'; a.click(); }} className="export-btn">CSV</button>
-            </div>
-          </div>
-        </div>
 
         <div className="data-table-wrapper">
-          <table className="dense-data-table">
+          <table className="dense-data-table" style={{ minWidth: '100%' }}>
             <thead>
               <tr className="tbl-head-row">
                 <th style={{ width: 60 }} className="text-center">Image</th>
                 <th style={{ width: 130, cursor: 'pointer' }} onClick={() => handleSort('item_code')}>Code {sortConfig.key === 'item_code' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : '↕'}</th>
                 <th style={{ cursor: 'pointer' }} onClick={() => handleSort('item_name')}>Item Name {sortConfig.key === 'item_name' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : '↕'}</th>
-                <th className="text-right" style={{ width: 150, cursor: 'pointer' }} onClick={() => handleSort('itemprice')}>Price {sortConfig.key === 'itemprice' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : '↕'}</th>
+                <th className="text-left" style={{ width: 150, cursor: 'pointer' }} onClick={() => handleSort('itemprice')}>Price {sortConfig.key === 'itemprice' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : '↕'}</th>
                 <th className="text-center" style={{ width: 110 }}>Status</th>
                 {isAdmin && <th className="text-right pr-6" style={{ width: 160 }}>Actions</th>}
               </tr>
@@ -193,7 +197,7 @@ const InventoryTable = ({ user, viewMode = 'list' }) => {
                   </td>
                   <td className="font-mono text-xs font-bold text-slate-500">{item.item_code}</td>
                   <td className="font-bold text-slate-800">{item.item_name || item.itemdesc}</td>
-                  <td className="text-right font-semibold text-slate-700">₹{Number(item.itemprice || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                  <td className="text-left font-semibold text-slate-700">₹{Number(item.itemprice || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                   <td className="text-center"><span className="badge-approved">Active</span></td>
                   {isAdmin && (
                     <td className="text-right pr-6">

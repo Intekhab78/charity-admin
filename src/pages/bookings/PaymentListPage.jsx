@@ -5,11 +5,14 @@ import { toast } from '../../components/common/Toast';
 import Pagination from '../../components/common/Pagination';
 import TableSkeleton from '../../components/common/TableSkeleton';
 import AnimatedCounter from '../../components/common/AnimatedCounter';
+import PageControlPanel from '../../components/common/PageControlPanel';
+import ExportButtons from '../../components/common/ExportButtons';
 
 const PaymentList = ({ user }) => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const isAdmin = user && user.role?.toLowerCase().includes('admin');
@@ -41,6 +44,39 @@ const PaymentList = ({ user }) => {
 
   const displayedPayments = useMemo(() => {
     let list = isAdmin ? payments : payments.filter(p => p.vendor_name === (user?.name || '').trim());
+    
+    if (filters.paymentMode) {
+      list = list.filter(p => (p.payment_mode || 'Cash').toLowerCase() === filters.paymentMode.toLowerCase());
+    }
+    
+    if (filters.status) {
+      if (filters.status === 'Paid') list = list.filter(p => p.is_approved_by_admin === 1);
+      if (filters.status === 'Pending') list = list.filter(p => p.is_approved_by_admin === 0);
+    }
+
+    if (filters.dateRange) {
+      const now = new Date();
+      list = list.filter(p => {
+        const pDate = new Date(p.created_at || p.booking_date).getTime();
+        if (filters.dateRange === 'today') {
+          const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+          return pDate >= startOfToday;
+        } else if (filters.dateRange === 'week') {
+          const s = new Date(now);
+          s.setDate(now.getDate() - now.getDay());
+          const startOfWeek = new Date(s.getFullYear(), s.getMonth(), s.getDate()).getTime();
+          return pDate >= startOfWeek;
+        } else if (filters.dateRange === 'month') {
+          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+          return pDate >= startOfMonth;
+        } else if (filters.dateRange === 'year') {
+          const startOfYear = new Date(now.getFullYear(), 0, 1).getTime();
+          return pDate >= startOfYear;
+        }
+        return true;
+      });
+    }
+
     if (searchTerm) {
       const lowerSearch = searchTerm.toLowerCase();
       list = list.filter(p =>
@@ -91,55 +127,12 @@ const PaymentList = ({ user }) => {
       p.payment_mode?.toLowerCase() === 'card'
     ).length;
 
-    const cards = [
-      { label: 'Total Payments', value: totalPayments, icon: Layers, color: '#6366f1' },
-      { label: 'Total Revenue', value: `₹${totalRevenue.toLocaleString('en-IN')}`, icon: Coins, color: '#10b981' },
-      { label: 'Average Payment', value: `₹${avgAmount.toLocaleString('en-IN')}`, icon: TrendingUp, color: '#8b5cf6' },
-      { label: 'Digital Payments', value: onlinePaymentsCount, icon: CreditCard, color: '#f59e0b' }
+    return [
+      { label: 'Total Payments', value: totalPayments, icon: Layers, color: '#6366f1', bg: '#eef2ff', border: 'rgba(99,102,241,0.15)' },
+      { label: 'Total Revenue', value: `₹${totalRevenue.toLocaleString('en-IN')}`, icon: Coins, color: '#10b981', bg: '#ecfdf5', border: 'rgba(16,185,129,0.15)' },
+      { label: 'Average Payment', value: `₹${avgAmount.toLocaleString('en-IN')}`, icon: TrendingUp, color: '#8b5cf6', bg: '#f5f3ff', border: 'rgba(139,92,246,0.15)' },
+      { label: 'Digital Payments', value: onlinePaymentsCount, icon: CreditCard, color: '#f59e0b', bg: '#fffbeb', border: 'rgba(245,158,11,0.15)' }
     ];
-
-    return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', marginBottom: '20px' }}>
-        {cards.map(card => {
-          const Icon = card.icon;
-          return (
-            <div key={card.label} 
-              className={`premium-card relative overflow-hidden p-4 flex items-center gap-4 group border border-slate-200/60 bg-white`}
-              style={{
-                borderLeft: `4px solid ${card.color}`
-              }}
-            >
-              <div 
-                className="absolute -right-4 -bottom-4 w-20 h-20 rounded-full opacity-[0.03] group-hover:scale-125 transition-transform duration-500"
-                style={{ backgroundColor: card.color }}
-              />
-
-              <div 
-                className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-105"
-                style={{ 
-                  backgroundColor: card.color + '15', 
-                  color: card.color,
-                  border: `1px solid ${card.color}25`
-                }}
-              >
-                <Icon size={18} />
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">
-                  {card.label}
-                </span>
-                <div className="flex items-baseline gap-2 mt-0.5">
-                  <span className="text-xl font-black text-slate-900 tracking-tight font-outfit">
-                    <AnimatedCounter value={card.value} />
-                  </span>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
   }, [displayedPayments]);
 
   const handleCopyClipboard = () => {
@@ -163,55 +156,61 @@ const PaymentList = ({ user }) => {
   return (
     <div className="flex flex-col gap-4 animate-fade-in">
       
-      {/* Premium Stats Grid */}
-      {statsCards}
+      <PageControlPanel
+        title="Payment Transactions" 
+        subtitle={`${payments.length} total transaction${payments.length !== 1 ? 's' : ''} — track and verify invoice payments`} 
+        icon={CreditCard}
+        stats={statsCards} 
+        searchTerm={searchTerm}
+        onSearchChange={val => { setSearchTerm(val); setCurrentPage(1); }}
+        filters={filters} 
+        onFilterChange={f => { setFilters(f); setCurrentPage(1); }}
+        filterOptions={{ 
+          dateRange: [
+            { label: 'Today', value: 'today' },
+            { label: 'This Week', value: 'week' },
+            { label: 'This Month', value: 'month' },
+            { label: 'This Year', value: 'year' }
+          ],
+          paymentMode: [
+            { label: 'Cash', value: 'Cash' },
+            { label: 'Online Transfer', value: 'Online Transfer' },
+            { label: 'Cheque', value: 'Cheque' }
+          ],
+          status: [
+            { label: 'Paid', value: 'Paid' },
+            { label: 'Pending', value: 'Pending' }
+          ]
+        }}
+        extraActions={
+          <ExportButtons 
+            filename="payment_transactions" 
+            title="Payment Transactions" 
+            columns={[
+              { header: 'SNo.', dataKey: 'sno' },
+              { header: 'INVOICE', dataKey: 'invoice' },
+              { header: 'CUSTOMER NAME', dataKey: 'customer_name' },
+              { header: 'PHONE', dataKey: 'customer_phone' },
+              { header: 'PAYMENT MODE', dataKey: 'payment_mode' },
+              { header: 'TOTAL AMOUNT (₹)', dataKey: 'total_amount' },
+              { header: 'ORDER DATE', dataKey: 'order_date' },
+              { header: 'PAYMENT STATUS', dataKey: 'payment_status' }
+            ]}
+            data={displayedPayments.map((p, i) => ({
+              sno: i + 1,
+              invoice: `INV-${p.id}`,
+              customer_name: p.customer_name,
+              customer_phone: p.customer_phone,
+              payment_mode: p.payment_mode || 'Cash',
+              total_amount: p.total_amount,
+              order_date: new Date(p.created_at).toLocaleDateString(),
+              payment_status: p.is_approved_by_admin === 1 ? 'Paid' : 'Pending'
+            }))}
+          />
+        }
+      />
 
       <div className="list-table-container">
-        {/* Table Hero Header */}
-        <div className="tbl-hero">
-          <div className="tbl-hero-left">
-            <div className="tbl-icon" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}>
-              <CreditCard size={20} />
-            </div>
-            <div>
-              <h3 className="tbl-title">Payment Transactions</h3>
-              <p className="tbl-subtitle">{payments.length} total transaction{payments.length !== 1 ? 's' : ''} &mdash; track and verify invoice payments</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="tbl-divider"></div>
-
-        {/* Controls */}
-        <div className="table-controls">
-          <div className="table-controls-left">
-            <div className="show-entries">
-              <span>Show</span>
-              <select 
-                value={entriesPerPage} 
-                onChange={e => { setEntriesPerPage(Number(e.target.value)); setCurrentPage(1); }}
-                className="border border-slate-200 rounded-lg p-1 text-xs font-bold text-slate-700 bg-white"
-              >
-                {[10, 25, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
-              </select>
-              <span>entries</span>
-            </div>
-            <div className="export-buttons">
-              <button className="export-btn font-semibold" onClick={handleCopyClipboard}>Copy</button>
-              <button className="export-btn font-semibold" onClick={handleCSVExport}>CSV</button>
-            </div>
-          </div>
-          <div className="search-box">
-            <Search size={16} />
-            <input 
-              type="text" 
-              value={searchTerm} 
-              onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              placeholder="Search payments..." 
-            />
-          </div>
-        </div>
-
         {/* Table Wrapper */}
         <div className="data-table-wrapper">
           <table className="dense-data-table">

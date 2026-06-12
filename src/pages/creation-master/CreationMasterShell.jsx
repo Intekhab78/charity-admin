@@ -1,5 +1,6 @@
 import React from 'react';
 import { Layers, Plus, Search, X } from 'lucide-react';
+import ExportButtons from '../../components/common/ExportButtons';
 
 const CreationMasterShell = ({
   title,
@@ -16,8 +17,7 @@ const CreationMasterShell = ({
   setSearchTerm,
   entriesPerPage,
   setEntriesPerPage,
-  onExportCSV,
-  onExportCopy
+  exportConfig
 }) => {
   return (
     <div className="flex flex-col gap-6 animate-fade-in">
@@ -47,7 +47,12 @@ const CreationMasterShell = ({
               </p>
             </div>
           </div>
-          <div className="tbl-hero-right">
+          <div className="tbl-hero-right flex items-center gap-3">
+            {exportConfig && (
+              <div className="export-buttons flex gap-1.5 flex-wrap">
+                <ExportButtons {...exportConfig} />
+              </div>
+            )}
             <button 
               onClick={onAdd} 
               className="tbl-new-btn"
@@ -61,27 +66,7 @@ const CreationMasterShell = ({
         <div className="tbl-divider"></div>
 
         {/* Controls */}
-        <div className="table-controls">
-          <div className="table-controls-left">
-            <div className="show-entries">
-              <span>Show</span>
-              <select 
-                value={entriesPerPage || 10} 
-                onChange={e => setEntriesPerPage && setEntriesPerPage(Number(e.target.value))} 
-                className="border border-slate-200 rounded-lg p-1 text-xs font-bold text-slate-700 bg-white"
-              >
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-              <span>entries</span>
-            </div>
-            <div className="export-buttons">
-              {onExportCopy && <button onClick={onExportCopy} className="export-btn font-semibold">Copy</button>}
-              {onExportCSV && <button onClick={onExportCSV} className="export-btn font-semibold">CSV</button>}
-            </div>
-          </div>
+        <div className="table-controls justify-end">
           <div className="search-box">
             <Search size={16} />
             <input 

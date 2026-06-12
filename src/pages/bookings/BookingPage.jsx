@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, X, Users, CreditCard, Calendar, CheckCircle, Search, Edit3, MoreVertical, Eye, FileText, ArrowLeft, Coins, ShieldCheck, ClipboardList, RefreshCw, Save } from 'lucide-react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { bookingService, customerService, qurbaniDateService, UPLOADS_BASE_URL } from '../../services/api';
 import { toast } from '../../components/common/Toast';
+import ExportButtons from '../../components/common/ExportButtons';
 import PageControlPanel from '../../components/common/PageControlPanel';
 import ConfirmModal from '../../components/common/ConfirmModal';
 import TableSkeleton from '../../components/common/TableSkeleton';
@@ -25,7 +26,7 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
   const [duplicateWarning, setDuplicateWarning] = useState(null);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [confirmConfig, setConfirmConfig] = useState({ title: '', message: '', type: 'danger', onConfirm: () => {} });
+  const [confirmConfig, setConfirmConfig] = useState({ title: '', message: '', type: 'danger', onConfirm: () => { } });
 
   const triggerConfirm = (config) => {
     setConfirmConfig({
@@ -40,7 +41,7 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
 
   // DataTable States
   const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState({ status: '', year: '', paymentMode: '', startDate: '', endDate: '' });
+  const [filters, setFilters] = useState({ status: '', year: '', paymentMode: '', startDate: '', endDate: '', dateRange: '' });
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [sortConfig, setSortConfig] = useState({ key: '', direction: '' });
@@ -188,7 +189,7 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
           total_shares: booking.total_shares,
           share_code: booking.share_code,
           payment_mode: booking.payment_mode || 'Cash',
-          booking_date: booking.booking_date ? (() => { const d = new Date(booking.booking_date); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })() : '',
+          booking_date: booking.booking_date ? (() => { const d = new Date(booking.booking_date); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })() : '',
           qurbani_date: booking.qurbani_date || ''
         });
         setShares((booking.shares || []).map(s => ({
@@ -201,6 +202,9 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
       }
     }
   }, [viewMode, routeId, bookings]);
+
+  const prevCustomerName = useRef('');
+  const prevCustomerPhone = useRef('');
 
   // Sync shares table with total_shares count and selected share code price
   useEffect(() => {
@@ -235,15 +239,41 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
       hasChanges = true;
     }
 
-    // Only auto-update amounts when NOT editing
+    // Only auto-update amounts and sync customer details when NOT editing
     if (!editingId) {
-      currentShares.forEach(s => {
+      currentShares.forEach((s, i) => {
+        // 1. Auto-generate Reg No if missing
+        if (!s.share_reg_no || s.share_reg_no === 'Auto-Gen') {
+          s.share_reg_no = `REG/${new Date().getFullYear()}/${Math.floor(Math.random() * 10000)}/${i + 1}`;
+          hasChanges = true;
+        }
+
+        // 2. Sync Amount
         if (s.amount !== defaultPrice) {
           s.amount = defaultPrice;
           hasChanges = true;
         }
+
+        // 3. Sync Customer Name if it matches the previous name (or is empty)
+        if (!s.beneficiary_name || s.beneficiary_name === prevCustomerName.current) {
+          if (s.beneficiary_name !== formData.customer_name) {
+            s.beneficiary_name = formData.customer_name;
+            hasChanges = true;
+          }
+        }
+
+        // 4. Sync Customer Phone if it matches the previous phone (or is empty)
+        if (!s.beneficiary_mobile || s.beneficiary_mobile === prevCustomerPhone.current) {
+          if (s.beneficiary_mobile !== formData.customer_phone) {
+            s.beneficiary_mobile = formData.customer_phone;
+            hasChanges = true;
+          }
+        }
       });
     }
+
+    prevCustomerName.current = formData.customer_name;
+    prevCustomerPhone.current = formData.customer_phone;
 
     if (hasChanges) {
       setShares(currentShares);
@@ -359,7 +389,7 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
 
         // Deduplicate by Name + Phone
         return index === self.findIndex(t => (
-          (t.trn_name || '').toLowerCase() === name && 
+          (t.trn_name || '').toLowerCase() === name &&
           String(t.customer_phone || '').replace(/\D/g, '') === cleanPhone
         ));
       });
@@ -530,7 +560,7 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
         `Total Amount: Rs. ${bookingData.total_amount || calculateTotal()}`,
         `Status: Verified`
       ].join('\n');
-      
+
       const qrDataUrl = await getQRCodeDataUrl(qrText);
       if (qrDataUrl) {
         doc.addImage(qrDataUrl, 'JPEG', 15, finalY - 6, 30, 30);
@@ -565,8 +595,8 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
           await bookingService.delete(id);
           fetchBookings();
           toast.success('Booking deleted successfully!');
-        } catch (err) { 
-          toast.error('Delete failed: ' + (err.response?.data?.message || err.message)); 
+        } catch (err) {
+          toast.error('Delete failed: ' + (err.response?.data?.message || err.message));
         }
       }
     });
@@ -604,14 +634,11 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
       newErrors.customer_email = "Please enter a valid email address.";
     }
     const totalSharesNum = parseInt(formData.total_shares);
-    if (isNaN(totalSharesNum) || totalSharesNum < 1 || totalSharesNum > 7) {
-      newErrors.total_shares = "Total shares must be between 1 and 7.";
+    if (isNaN(totalSharesNum) || totalSharesNum < 1) {
+      newErrors.total_shares = "Total shares must be at least 1.";
     }
     if (!formData.share_code) {
       newErrors.share_code = "Share Code is required.";
-    }
-    if (!formData.qurbani_date) {
-      newErrors.qurbani_date = "Qurbani Date is required.";
     }
     if (!formData.booking_date) {
       newErrors.booking_date = "Booking Date is required.";
@@ -745,7 +772,7 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
   const getFilteredBookings = () => {
     let list = displayedBookings.filter(b => {
       const lowerSearch = searchTerm.toLowerCase();
-      const matchesSearch = !searchTerm || 
+      const matchesSearch = !searchTerm ||
         (b.customer_name || '').toLowerCase().includes(lowerSearch) ||
         String(b.customer_phone || '').includes(lowerSearch) ||
         (b.vendor_name || '').toLowerCase().includes(lowerSearch) ||
@@ -780,7 +807,28 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
         matchesEndDate = bDateTime <= endTime;
       }
 
-      return matchesSearch && matchesStatus && matchesYear && matchesPayment && matchesStartDate && matchesEndDate;
+      let matchesDateRange = true;
+      if (filters.dateRange) {
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+        if (filters.dateRange === 'today') {
+          matchesDateRange = bDateTime >= startOfToday;
+        } else if (filters.dateRange === 'week') {
+          const s = new Date(now);
+          s.setDate(now.getDate() - now.getDay());
+          const startOfWeek = new Date(s.getFullYear(), s.getMonth(), s.getDate()).getTime();
+          matchesDateRange = bDateTime >= startOfWeek;
+        } else if (filters.dateRange === 'month') {
+          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+          matchesDateRange = bDateTime >= startOfMonth;
+        } else if (filters.dateRange === 'year') {
+          const startOfYear = new Date(now.getFullYear(), 0, 1).getTime();
+          matchesDateRange = bDateTime >= startOfYear;
+        }
+      }
+
+      return matchesSearch && matchesStatus && matchesYear && matchesPayment && matchesStartDate && matchesEndDate && matchesDateRange;
     });
 
     if (sortConfig.key) {
@@ -828,6 +876,12 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
         filters={filters}
         onFilterChange={(f) => { setFilters(f); setCurrentPage(1); }}
         filterOptions={{
+          dateRange: [
+            { label: 'Today', value: 'today' },
+            { label: 'This Week', value: 'week' },
+            { label: 'This Month', value: 'month' },
+            { label: 'This Year', value: 'year' }
+          ],
           status: [
             { label: 'Confirmed / Approved', value: 'confirmed' },
             { label: 'Pending Approval', value: 'pending' },
@@ -842,102 +896,48 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
         }}
         onAddClick={() => navigate('/bookings/add')}
         addLabel="New Booking"
+        extraActions={
+          <div className="flex items-center gap-2">
+            <ExportButtons 
+              filename="bookings_list" 
+              title="Booking List Report" 
+              columns={[
+                { header: 'SNo.', dataKey: 'sno' },
+                { header: 'INVOICE', dataKey: 'invoice' },
+                { header: 'CUSTOMER NAME', dataKey: 'customer_name' },
+                { header: 'PHONE', dataKey: 'customer_phone' },
+                { header: 'VENDOR', dataKey: 'vendor' },
+                { header: 'REG. NO', dataKey: 'reg_no' },
+                { header: 'SHARES', dataKey: 'total_shares' },
+                { header: 'RATE', dataKey: 'rate' },
+                { header: 'TOTAL AMOUNT', dataKey: 'total_amount' },
+                { header: 'QURBANI DAY', dataKey: 'qurbani_date' },
+                { header: 'ORDER DATE', dataKey: 'order_date' }
+              ]}
+              data={filtered.map((b, i) => ({
+                sno: i + 1,
+                invoice: `INV-${b.id || b._id}`,
+                customer_name: b.customer_name || '',
+                customer_phone: b.customer_phone || '',
+                vendor: b.vendor_name || companyInfo.company_name || 'Vendor',
+                reg_no: b.shares ? b.shares.map(s => s.share_reg_no).join('; ') : '',
+                total_shares: b.total_shares,
+                rate: b.total_shares ? (b.total_amount / b.total_shares) : 0,
+                total_amount: b.total_amount,
+                qurbani_date: b.qurbani_date || '—',
+                order_date: new Date(b.booking_date || b.created_at).toLocaleDateString()
+              }))}
+            />
+            {isAdmin && selectedBookingIds.length > 0 && (
+              <button onClick={handleBulkApprove} className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shadow-sm">
+                Approve Selected ({selectedBookingIds.length})
+              </button>
+            )}
+          </div>
+        }
       />
 
       <div className="list-table-container border border-slate-200/80 rounded-3xl overflow-hidden shadow-sm bg-white">
-        <div className="table-controls border-b border-slate-100 p-6 flex justify-between items-center flex-wrap gap-4">
-          <div className="table-controls-left flex items-center gap-4 flex-wrap">
-            <div className="show-entries flex items-center gap-2 text-xs text-slate-500 font-semibold">
-              <span>Show</span>
-              <select value={entriesPerPage} onChange={(e) => { setEntriesPerPage(Number(e.target.value)); setCurrentPage(1); }} className="bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-xl px-2 py-1.5 outline-none cursor-pointer font-bold text-slate-600">
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-              <span>entries</span>
-            </div>
-            
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-              <span className="ml-2">From:</span>
-              <input 
-                type="date" 
-                value={filters.startDate || ''} 
-                onChange={e => {
-                  setFilters(prev => ({ ...prev, startDate: e.target.value }));
-                  setCurrentPage(1);
-                }}
-                className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 text-slate-700 outline-none text-xs font-semibold"
-              />
-              <span>To:</span>
-              <input 
-                type="date" 
-                value={filters.endDate || ''} 
-                onChange={e => {
-                  setFilters(prev => ({ ...prev, endDate: e.target.value }));
-                  setCurrentPage(1);
-                }}
-                className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 text-slate-700 outline-none text-xs font-semibold"
-              />
-              {(filters.startDate || filters.endDate) && (
-                <button 
-                  onClick={() => setFilters(prev => ({ ...prev, startDate: '', endDate: '' }))}
-                  className="p-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
-                  title="Clear Date Filters"
-                >
-                  <X size={12} />
-                </button>
-              )}
-            </div>
-
-            <div className="export-buttons flex gap-1.5 flex-wrap">
-              <button onClick={() => {
-                const text = filtered.map((b, i) => [
-                  i + 1,
-                  `INV-${b.id || b._id}`,
-                  b.customer_name,
-                  b.customer_phone,
-                  b.vendor_name || companyInfo.company_name || 'Vendor',
-                  b.shares ? b.shares.map(s => s.share_reg_no).join('; ') : '',
-                  b.total_shares,
-                  b.total_shares ? (b.total_amount / b.total_shares) : 0,
-                  b.total_amount,
-                  b.qurbani_date || '—',
-                  new Date(b.booking_date || b.created_at).toLocaleDateString()
-                ].join('\t')).join('\n');
-                navigator.clipboard.writeText("S.No\tInvoice\tCustomer Name\tPhone\tVendor\tReg. No\tShares\tRate\tTotal Amount\tQurbani Day\tOrder Date\n" + text)
-                  .then(() => toast.success("Copied to clipboard!"))
-                  .catch(() => toast.error("Failed to copy data."));
-              }} className="px-3 py-1.5 bg-slate-50 hover:bg-emerald-500 hover:text-white border border-slate-200 rounded-full text-xs font-bold text-slate-500 transition-all cursor-pointer">Copy</button>
-              <button onClick={() => {
-                const headers = ['SNo.', 'INVOICE', 'CUSTOMER NAME', 'PHONE', 'VENDOR', 'REG. NO', 'SHARES', 'RATE', 'TOTAL AMOUNT', 'QURBANI DAY', 'ORDER DATE'];
-                const rows = filtered.map((b, i) => [
-                  i + 1,
-                  `INV-${b.id || b._id}`,
-                  `"${(b.customer_name || '').replace(/"/g, '""')}"`,
-                  `"${(b.customer_phone || '').replace(/"/g, '""')}"`,
-                  `"${(b.vendor_name || companyInfo.company_name || 'Vendor').replace(/"/g, '""')}"`,
-                  `"${(b.shares ? b.shares.map(s => s.share_reg_no).join('; ') : '').replace(/"/g, '""')}"`,
-                  b.total_shares,
-                  b.total_shares ? (b.total_amount / b.total_shares) : 0,
-                  b.total_amount,
-                  `"${(b.qurbani_date || '—').replace(/"/g, '""')}"`,
-                  new Date(b.booking_date || b.created_at).toLocaleDateString()
-                ].map(val => String(val)).join(','));
-                const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(headers.join(',') + '\n' + rows.join('\n'));
-                const link = document.createElement('a');
-                link.href = csvContent;
-                link.download = 'bookings.csv';
-                link.click();
-              }} className="px-3 py-1.5 bg-slate-50 hover:bg-emerald-500 hover:text-white border border-slate-200 rounded-full text-xs font-bold text-slate-500 transition-all cursor-pointer">CSV</button>
-              {isAdmin && selectedBookingIds.length > 0 && (
-                <button onClick={handleBulkApprove} className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shadow-sm">
-                  Approve Selected ({selectedBookingIds.length})
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
 
         <div className="data-table-wrapper">
           <table className="dense-data-table">
@@ -945,8 +945,8 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
               <tr className="tbl-head-row">
                 {isAdmin && (
                   <th style={{ width: '40px' }} className="text-center">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={
                         paginatedBookings.filter(b => b.is_approved_by_admin === 0 && !b.is_online_order).length > 0 &&
                         paginatedBookings.filter(b => b.is_approved_by_admin === 0 && !b.is_online_order).every(b => selectedBookingIds.includes(b._id || b.id))
@@ -966,7 +966,6 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
                     />
                   </th>
                 )}
-                <th style={{ width: '48px' }} className="text-center">#</th>
                 <th style={{ cursor: 'pointer' }} onClick={() => handleSort('id')}>
                   Invoice {sortConfig.key === 'id' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : '↕'}
                 </th>
@@ -998,10 +997,10 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
             </thead>
             <tbody>
               {loading ? (
-                <TableSkeleton rows={5} cols={isAdmin ? 13 : 12} hasAvatar={false} />
+                <TableSkeleton rows={5} cols={isAdmin ? 12 : 11} hasAvatar={false} />
               ) : paginatedBookings.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdmin ? 13 : 12} className="text-center py-12 text-slate-400">
+                  <td colSpan={isAdmin ? 12 : 11} className="text-center py-12 text-slate-400">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center border border-slate-100 shadow-sm text-slate-300">
                         <ClipboardList size={24} />
@@ -1023,12 +1022,12 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
                       {isAdmin && (
                         <td className="text-center">
                           {b.is_approved_by_admin === 0 && !b.is_online_order ? (
-                            <input 
+                            <input
                               type="checkbox"
                               checked={selectedBookingIds.includes(b._id || b.id)}
                               onChange={() => {
                                 const bId = b._id || b.id;
-                                setSelectedBookingIds(prev => 
+                                setSelectedBookingIds(prev =>
                                   prev.includes(bId) ? prev.filter(id => id !== bId) : [...prev, bId]
                                 );
                               }}
@@ -1039,7 +1038,6 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
                           )}
                         </td>
                       )}
-                      <td className="text-center font-medium text-slate-400">{globalIndex}</td>
                       <td className="font-mono text-xs font-bold text-slate-500">INV-{b.id || b._id}</td>
                       <td>
                         <div className="font-bold text-slate-800">{b.customer_name}</div>
@@ -1367,7 +1365,7 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
                     {/* Total Shares */}
                     <div>
                       <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Total Shares *</label>
-                      <input type="number" min="1" max="7" value={formData.total_shares} onChange={e => { setFormData({ ...formData, total_shares: e.target.value }); if (errors.total_shares) setErrors(prev => ({ ...prev, total_shares: null })); }} required
+                      <input type="number" min="1" value={formData.total_shares} onChange={e => { setFormData({ ...formData, total_shares: e.target.value }); if (errors.total_shares) setErrors(prev => ({ ...prev, total_shares: null })); }} required
                         style={{ width: '100%', padding: '11px 14px', border: '2px solid #e2e8f0', borderRadius: '12px', fontSize: '14px', outline: 'none', background: '#f8fafc', boxSizing: 'border-box', fontFamily: 'inherit', transition: 'all 0.2s' }}
                         onFocus={e => { e.target.style.borderColor = '#6366f1'; e.target.style.background = '#fff'; e.target.style.boxShadow = '0 0 0 4px rgba(99,102,241,0.1)'; }}
                         onBlur={e => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc'; e.target.style.boxShadow = 'none'; }}
@@ -1383,23 +1381,22 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
                         onFocus={e => { e.target.style.borderColor = '#6366f1'; e.target.style.background = '#fff'; }}
                         onBlur={e => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc'; }}>
                         <option value="" disabled>Select Share Code</option>
-                        {shareCodes.map(s => <option key={`${s.id}-${s.code}`} value={s.code}>{s.display}</option>)}
+                        {shareCodes.map(s => <option key={`${s.id}-${s.code}`} value={s.code}>₹{s.price}</option>)}
                       </select>
                       {errors.share_code && <span style={{ display: 'block', color: '#f43f5e', fontSize: '10px', fontWeight: 'bold', marginTop: '4px' }}>{errors.share_code}</span>}
                     </div>
 
                     {/* Qurbani Date */}
                     <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Qurbani Date / Day *</label>
-                      <select value={formData.qurbani_date} onChange={e => { setFormData({ ...formData, qurbani_date: e.target.value }); if (errors.qurbani_date) setErrors(prev => ({ ...prev, qurbani_date: null })); }} required
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Qurbani Date / Day</label>
+                      <select value={formData.qurbani_date} onChange={e => { setFormData({ ...formData, qurbani_date: e.target.value }); if (errors.qurbani_date) setErrors(prev => ({ ...prev, qurbani_date: null })); }}
                         style={{ width: '100%', padding: '11px 14px', border: '2px solid #e2e8f0', borderRadius: '12px', fontSize: '14px', outline: 'none', background: '#f8fafc', boxSizing: 'border-box', fontFamily: 'inherit', cursor: 'pointer', transition: 'all 0.2s' }}
                         onFocus={e => { e.target.style.borderColor = '#6366f1'; e.target.style.background = '#fff'; }}
                         onBlur={e => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc'; }}>
                         <option value="" disabled>Select Qurbani Date / Day</option>
                         {qurbaniDates.length > 0 ? qurbaniDates.map(d => {
                           const dateStr = d.actual_date ? ` (${new Date(d.actual_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })})` : '';
-                          const descStr = d.description ? ` — ${d.description}` : '';
-                          return <option key={d.id} value={d.qurbani_date}>{d.qurbani_date}{dateStr}{descStr}</option>;
+                          return <option key={d.id} value={d.qurbani_date}>{d.qurbani_date}{dateStr}</option>;
                         }) : <option value="">No active dates</option>}
                       </select>
                       {errors.qurbani_date && <span style={{ display: 'block', color: '#f43f5e', fontSize: '10px', fontWeight: 'bold', marginTop: '4px' }}>{errors.qurbani_date}</span>}
@@ -1474,16 +1471,15 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
                                   style={{ width: '100%', padding: '8px 10px', border: errors.shares?.[i]?.objective ? '1px solid #f43f5e' : '1px solid #e2e8f0', borderRadius: '8px', fontSize: '13px', background: '#fff', boxSizing: 'border-box', outline: 'none', cursor: 'pointer', fontFamily: 'inherit', transition: 'border-color 0.15s' }}
                                   onFocus={e => e.target.style.borderColor = errors.shares?.[i]?.objective ? '#f43f5e' : '#6366f1'}
                                   onBlur={e => e.target.style.borderColor = errors.shares?.[i]?.objective ? '#f43f5e' : '#e2e8f0'}>
-                                  <option value="">Select Department</option>
+                                  <option value="">--Select--</option>
                                   {departments.length > 0 ? departments.map(d => <option key={d.id} value={d.dept_name}>{d.dept_name}</option>) : <option disabled>Loading...</option>}
                                 </select>
                                 {errors.shares?.[i]?.objective && <span style={{ display: 'block', color: '#f43f5e', fontSize: '9px', fontWeight: 'bold', marginTop: '2px' }}>{errors.shares[i].objective}</span>}
                               </td>
                               <td style={{ padding: '10px 14px' }}>
-                                <input type="number" value={s.amount} onChange={e => handleShareChange(i, 'amount', e.target.value)} required
-                                  style={{ width: '100%', padding: '8px 10px', border: errors.shares?.[i]?.amount ? '1px solid #f43f5e' : '1px solid #e2e8f0', borderRadius: '8px', fontSize: '13px', fontWeight: '700', textAlign: 'right', background: '#fff', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit', transition: 'border-color 0.15s' }}
-                                  onFocus={e => e.target.style.borderColor = errors.shares?.[i]?.amount ? '#f43f5e' : '#059669'}
-                                  onBlur={e => e.target.style.borderColor = errors.shares?.[i]?.amount ? '#f43f5e' : '#e2e8f0'} />
+                                <input type="number" value={s.amount} readOnly
+                                  style={{ width: '100%', padding: '8px 10px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '13px', fontWeight: '700', textAlign: 'right', background: '#f8fafc', color: '#64748b', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit', cursor: 'not-allowed' }}
+                                />
                                 {errors.shares?.[i]?.amount && <span style={{ display: 'block', color: '#f43f5e', fontSize: '9px', fontWeight: 'bold', marginTop: '2px', textAlign: 'right' }}>{errors.shares[i].amount}</span>}
                               </td>
                             </tr>
@@ -1642,14 +1638,7 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
         .search-box input::placeholder { color: #94a3b8; }
         .search-box:focus-within { border-color: #10b981; background: #fff; box-shadow: 0 0 0 3px rgba(16,185,129,0.12); }
 
-        /* Data Table */
-        .data-table-wrapper { overflow-x: auto; border-radius: 0; border: none; margin: 0; }
-        .dense-data-table { width: 100%; border-collapse: collapse; min-width: 1060px; font-size: 13px; font-family: 'Inter', sans-serif; }
-        .dense-data-table thead { position: sticky; top: 0; z-index: 1; }
-        .tbl-head-row th { background: #0f172a; padding: 14px 20px; border-bottom: none; text-align: left; color: rgba(255,255,255,0.7); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.09em; white-space: nowrap; }
-        .tbl-head-row th:first-child { border-radius: 0; }
-        .dense-data-table td { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; transition: background 0.15s; font-size: 13px; }
-        .dense-data-table tbody tr:last-child td { border-bottom: none; }
+
 
         /* Source row accent */
         .source-row:hover td { background-color: #f8fafc !important; }
@@ -1694,10 +1683,10 @@ const BookingManagement = ({ user, viewMode = 'form' }) => {
         .current-page { padding: 8px 16px; background: #10b981; color: #fff; border-radius: 8px; font-weight: 700; font-size: 13px; }
       `}</style>
 
-      <ConfirmModal 
-        isOpen={confirmOpen} 
-        onCancel={() => setConfirmOpen(false)} 
-        {...confirmConfig} 
+      <ConfirmModal
+        isOpen={confirmOpen}
+        onCancel={() => setConfirmOpen(false)}
+        {...confirmConfig}
       />
     </div>
   );

@@ -158,19 +158,7 @@ const StandardCreationMasterPage = ({ config }) => {
 
   const totalPages = Math.ceil(filteredRecords.length / entriesPerPage) || 1;
 
-  const handleExportCopy = () => {
-    const headers = config.columns.map(([, l]) => l).join('\t');
-    const rows = filteredRecords.map(r => config.columns.map(([k]) => k === 'status' ? (Number(r.status) === 1 ? 'Active' : 'Inactive') : r[k] ?? '').join('\t')).join('\n');
-    navigator.clipboard.writeText(`${headers}\n${rows}`).then(() => toast.success('Copied!')).catch(() => toast.error('Failed to copy.'));
-  };
 
-  const handleExportCSV = () => {
-    const headers = config.columns.map(([, l]) => `"${l}"`).join(',');
-    const rows = filteredRecords.map(r => config.columns.map(([k]) => { const v = k === 'status' ? (Number(r.status) === 1 ? 'Active' : 'Inactive') : r[k] ?? ''; return `"${String(v).replace(/"/g, '""')}"` }).join(','));
-    const csv = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(headers + '\n' + rows.join('\n'));
-    const a = document.createElement('a'); a.href = csv; a.download = `${config.tableName}_master.csv`; a.click();
-    toast.success('Downloaded CSV.');
-  };
 
   // Determine icon color per tableName for modal header
   const headerAccent = config.tableName === 'location' ? '#6366f1' : config.tableName === 'currency' ? '#f59e0b' : '#10b981';
@@ -303,8 +291,18 @@ const StandardCreationMasterPage = ({ config }) => {
         setSearchTerm={setSearchTerm}
         entriesPerPage={entriesPerPage}
         setEntriesPerPage={setEntriesPerPage}
-        onExportCSV={handleExportCSV}
-        onExportCopy={handleExportCopy}
+        exportConfig={{
+          filename: `${config.tableName}_master`,
+          title: config.title,
+          columns: config.columns.map(([dataKey, header]) => ({ header, dataKey })),
+          data: filteredRecords.map(r => {
+            const rowData = {};
+            config.columns.forEach(([k]) => {
+              rowData[k] = k === 'status' ? (Number(r.status) === 1 ? 'Active' : 'Inactive') : r[k];
+            });
+            return rowData;
+          })
+        }}
         table={
           <>
             <CreationMasterTable columns={config.columns} records={paginatedRecords} onEdit={startEdit} onDelete={id => setDeleteConfirmId(id)} />

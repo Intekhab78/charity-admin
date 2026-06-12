@@ -8,6 +8,7 @@ import ConfirmModal from '../../components/common/ConfirmModal';
 import Pagination from '../../components/common/Pagination';
 import TableSkeleton from '../../components/common/TableSkeleton';
 import PremiumModal, { pmLabel, pmInput, CancelBtn, SaveBtn, DetailRow } from '../../components/common/PremiumModal';
+import ExportButtons from '../../components/common/ExportButtons';
 
 const ACCENT = '#10b981';
 const ACCENT_DARK = '#059669';
@@ -168,24 +169,29 @@ const VendorManagement = ({ viewMode = 'list' }) => {
         filters={filters} onFilterChange={(f) => { setFilters(f); setCurrentPage(1); }}
         filterOptions={{ provider: [{ label: 'Gmail', value: 'gmail' }, { label: 'Charity Org', value: 'charity' }, { label: 'Others', value: '.' }] }}
         onAddClick={() => navigate('/vendors/add')} addLabel="New Vendor"
+        extraActions={
+          <ExportButtons 
+            filename="vendors_database" 
+            title="Vendors" 
+            columns={[
+              { header: 'SNo.', dataKey: 'sno' },
+              { header: 'VENDOR ID', dataKey: 'vid' },
+              { header: 'NAME', dataKey: 'name' },
+              { header: 'EMAIL', dataKey: 'email' },
+              { header: 'MOBILE', dataKey: 'mobile' }
+            ]}
+            data={filtered.map((v, i) => ({
+              sno: i + 1,
+              vid: v.id,
+              name: `${v.firstname} ${v.lastname}`,
+              email: v.email,
+              mobile: v.mobile
+            }))}
+          />
+        }
       />
 
       <div className="list-table-container">
-        <div className="table-controls">
-          <div className="table-controls-left">
-            <div className="show-entries">
-              <span>Show</span>
-              <select value={entriesPerPage} onChange={e => { setEntriesPerPage(Number(e.target.value)); setCurrentPage(1); }}>
-                {[10, 25, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
-              </select>
-              <span>entries</span>
-            </div>
-            <div className="export-buttons">
-              <button onClick={() => { const r = filtered.map((v, i) => [i + 1, v.id, `${v.firstname} ${v.lastname}`, v.email, v.mobile].join('\t')).join('\n'); navigator.clipboard.writeText('S.No\tVendor ID\tName\tEmail\tMobile\n' + r).then(() => toast.success('Copied!')).catch(() => toast.error('Failed.')); }} className="export-btn">Copy</button>
-              <button onClick={() => { const h = ['SNo.', 'VENDOR ID', 'NAME', 'EMAIL', 'MOBILE']; const r = filtered.map((v, i) => [i + 1, v.id, `"${v.firstname} ${v.lastname}"`, v.email, v.mobile].join(',')); const c = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(h.join(',') + '\n' + r.join('\n')); const a = document.createElement('a'); a.href = c; a.download = 'vendors.csv'; a.click(); }} className="export-btn">CSV</button>
-            </div>
-          </div>
-        </div>
 
         <div className="data-table-wrapper">
           <table className="dense-data-table">

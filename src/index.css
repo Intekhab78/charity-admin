@@ -1,11 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Outfit:wght@100..900&display=swap');
 
 @import "tailwindcss";
-@config "../tailwind.config.js";
+
 
 @layer base {
   body {
-    @apply font-sans bg-slate-50 text-slate-800 antialiased text-[14px] leading-relaxed tracking-[0.015em];
+    font-family: 'Inter', sans-serif;
+    background-color: #f8fafc;
+    color: #1e293b;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 14px;
+    line-height: 1.625;
+    letter-spacing: 0.015em;
   }
 
   h1,
@@ -14,27 +21,55 @@
   h4,
   h5,
   h6 {
-    @apply font-outfit;
+    font-family: 'Outfit', sans-serif;
   }
 }
 
 @layer components {
   .sub-link {
-    @apply flex items-center gap-3 px-4 py-2.5 rounded-xl text-[13.5px] font-medium text-slate-500 transition-all ml-3 hover:text-primary hover:bg-primary-light/50;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #64748b;
+    transition: all 0.3s;
+    margin-left: 12px;
+  }
+
+  .sub-link:hover {
+    color: #10b981;
+    background-color: rgba(16, 185, 129, 0.1);
   }
 
   .sub-link.sub-active {
-    @apply bg-primary-light text-primary font-bold;
+    background-color: #ecfdf5;
+    color: #10b981;
+    font-weight: 700;
   }
 
   /* Custom Sidebar Active Indicator */
   .sidebar-link-active {
-    @apply relative bg-white text-primary font-bold border border-primary-light shadow-md;
+    position: relative;
+    background-color: #ffffff;
+    color: #10b981;
+    font-weight: 700;
+    border: 1px solid #ecfdf5;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
 
   .sidebar-link-active::before {
     content: '';
-    @apply absolute -left-1 top-[15%] h-[70%] w-1 bg-primary rounded-r-full;
+    position: absolute;
+    left: -4px;
+    top: 15%;
+    height: 70%;
+    width: 4px;
+    background-color: #10b981;
+    border-top-right-radius: 9999px;
+    border-bottom-right-radius: 9999px;
   }
 }
 
@@ -61,7 +96,11 @@
 }
 
 .sidebar-scroll::-webkit-scrollbar-thumb {
-  @apply bg-slate-200 dark:bg-slate-800 rounded-full;
+  background-color: #e2e8f0;
+  border-radius: 9999px;
+}
+.dark .sidebar-scroll::-webkit-scrollbar-thumb {
+  background-color: #1e293b;
 }
 
 /* ── Premium Custom Elements ── */
@@ -227,7 +266,13 @@
 
 /* Controls bar */
 .table-controls {
-  display: none !important;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .table-controls-left {

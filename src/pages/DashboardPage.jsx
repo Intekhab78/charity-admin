@@ -221,9 +221,8 @@ const DashboardPage = ({ user }) => {
       color: '#6366f1',
       colorName: 'indigo',
       shadowColor: 'indigo',
-      trend: 'Reset filters & show all',
+      trend: 'Click to view all bookings',
       path: '/bookings/list',
-      clickableFilter: true
     },
     {
       label: 'Total Revenue',
@@ -232,9 +231,8 @@ const DashboardPage = ({ user }) => {
       color: '#10b981',
       colorName: 'emerald',
       shadowColor: 'emerald',
-      trend: 'Reset filters & show all',
+      trend: 'Click to view collection report',
       path: '/bookings/collection',
-      clickableFilter: true
     },
     {
       label: 'Total Shares',
@@ -243,9 +241,8 @@ const DashboardPage = ({ user }) => {
       color: '#f59e0b',
       colorName: 'amber',
       shadowColor: 'amber',
-      trend: 'Reset filters & show all',
+      trend: 'Click to view Qurbani collection',
       path: '/bookings/collection',
-      clickableFilter: true
     },
     {
       label: "Today's Orders",
@@ -254,9 +251,8 @@ const DashboardPage = ({ user }) => {
       color: '#0ea5e9',
       colorName: 'sky',
       shadowColor: 'sky',
-      trend: 'Filter timeframe to Today',
+      trend: "Click to view today's bookings",
       path: '/bookings/list',
-      clickableFilter: true
     },
     ...(isAdmin ? [
       {
@@ -451,28 +447,14 @@ const DashboardPage = ({ user }) => {
           const Icon = k.icon;
           return (
             <div key={k.label} className={`glass-card glass-card-hover glow-${k.shadowColor}`}
-              onClick={() => {
-                if (k.clickableFilter) {
-                  if (k.label === 'Total Bookings' || k.label === 'Total Revenue' || k.label === 'Total Shares') {
-                    setActiveFilter({ type: 'all', label: '', value: null });
-                    toast.success("Cleared filters. Showing all bookings.");
-                  } else if (k.label === "Today's Orders") {
-                    setTimeframe('Today');
-                    setActiveFilter({ type: 'all', label: '', value: null });
-                    toast.success("Timeframe set to Today");
-                  }
-                } else {
-                  navigate(k.path);
-                }
-              }}
-              title={k.clickableFilter ? `${k.trend}` : `Go to ${k.label}`}
+              onClick={() => navigate(k.path)}
+              title={`Go to ${k.label}`}
               style={{ padding: '16px', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '10px', position: 'relative', overflow: 'hidden' }}>
               
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 2 }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4.5px' }}>
                     <div style={{ fontSize: '11px', fontWeight: '750', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{k.label}</div>
-                    {k.clickableFilter && <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: k.color }} title="Click to filter locally" />}
                   </div>
                   {loading ? (
                     <div className="shimmer-loading" style={{ width: '80px', height: '24px', borderRadius: '6px', marginTop: '6px' }} />
@@ -549,6 +531,347 @@ const DashboardPage = ({ user }) => {
             );
           })}
         </div>
+      )}
+
+      {/* Quick Access Grid */}
+      <div className="list-table-container glass-card" style={{ border: '1px solid rgba(226, 232, 240, 0.8)' }}>
+        <div className="tbl-hero" style={{ padding: '16px 20px 14px' }}>
+          <div className="tbl-hero-left">
+            <div className="tbl-icon" style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)', boxShadow: '0 3px 8px rgba(99, 102, 241, 0.2)' }}>
+              <LayoutDashboard size={16} />
+            </div>
+            <div>
+              <h3 className="tbl-title" style={{ fontSize: '15px' }}>Quick Actions Panel</h3>
+              <p className="tbl-subtitle" style={{ fontSize: '11.5px' }}>Access critical operations areas</p>
+            </div>
+          </div>
+        </div>
+        <div className="tbl-divider" />
+        <div style={{ padding: '14px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '10px' }}>
+          {quickLinks.map(q => {
+            const Icon = q.icon;
+            return (
+              <div key={q.label} onClick={() => navigate(q.path)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '10px',
+                  padding: '12px',
+                  background: 'rgba(255, 255, 255, 0.5)',
+                  border: '1px solid rgba(226, 232, 240, 0.8)',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                  textAlign: 'left',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = q.color + '08';
+                  e.currentTarget.style.borderColor = q.color + '35';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = `0 4px 12px ${q.color}12`;
+                  const arrow = e.currentTarget.querySelector('.tile-arrow');
+                  if (arrow) {
+                    arrow.style.opacity = '1';
+                    arrow.style.transform = 'translateX(3px)';
+                  }
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.5)';
+                  e.currentTarget.style.borderColor = 'rgba(226, 232, 240, 0.8)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                  const arrow = e.currentTarget.querySelector('.tile-arrow');
+                  if (arrow) {
+                    arrow.style.opacity = '0';
+                    arrow.style.transform = 'translateX(0)';
+                  }
+                }}
+              >
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: q.color + '15', color: q.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: `1px solid ${q.color}20` }}>
+                  <Icon size={14} />
+                </div>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
+                  <div style={{ fontWeight: '700', fontSize: '12.5px', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{q.label}</span>
+                    <ArrowRight className="tile-arrow" size={12} style={{ opacity: 0, color: q.color, transition: 'all 0.2s ease', flexShrink: 0 }} />
+                  </div>
+                  <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: '500', lineHeight: '1.4' }}>{q.desc}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Two-Column: Recent Bookings & Live Activity */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '18px' }}>
+        
+        {/* Recent Bookings Feed */}
+        <div className="list-table-container glass-card" style={{ border: '1px solid rgba(226, 232, 240, 0.8)' }}>
+          <div className="tbl-hero" style={{ padding: '16px 20px 14px' }}>
+            <div className="tbl-hero-left">
+              <div className="tbl-icon" style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', boxShadow: '0 3px 8px rgba(16, 185, 129, 0.2)' }}>
+                <ClipboardList size={16} />
+              </div>
+              <div>
+                <h3 className="tbl-title" style={{ fontSize: '15px' }}>Recent Bookings</h3>
+                <p className="tbl-subtitle" style={{ fontSize: '11.5px' }}>Latest bookings feed</p>
+              </div>
+            </div>
+            <div className="tbl-hero-right">
+              <button 
+                onClick={() => {
+                  const navState = {};
+                  if (activeFilter.type === 'payment') {
+                    navState.paymentMode = activeFilter.value === 'cash' ? 'Cash' : activeFilter.value === 'online' ? 'Online' : 'Cheque';
+                  } else if (activeFilter.type === 'share_code') {
+                    navState.searchTerm = activeFilter.value;
+                  } else if (activeFilter.type === 'status') {
+                    navState.filterStatus = activeFilter.value;
+                  }
+                  navigate('/bookings/list', { state: navState });
+                }} 
+                style={{ fontSize: '11px', fontWeight: '800', color: '#059669', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px', padding: '4px 8px', borderRadius: '8px', transition: 'all 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(16, 185, 129, 0.08)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                View All <ArrowRight size={11} />
+              </button>
+            </div>
+          </div>
+          <div className="tbl-divider" />
+          
+          {/* Active Filter Banner */}
+          {activeFilter.type !== 'all' && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '10px 16px', background: 'rgba(16, 185, 129, 0.06)', borderBottom: '1px solid rgba(16, 185, 129, 0.12)' }}>
+              <span style={{ fontSize: '12px', color: '#059669', fontWeight: '750' }}>
+                Active Filter: {activeFilter.label}
+              </span>
+              <button 
+                onClick={() => {
+                  setActiveFilter({ type: 'all', label: '', value: null });
+                  toast.success("Filter cleared");
+                }}
+                style={{ background: '#ef4444', color: '#ffffff', border: 'none', borderRadius: '6px', padding: '3px 9px', fontSize: '10px', fontWeight: '800', cursor: 'pointer', transition: 'background 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.background = '#dc2626'}
+                onMouseLeave={e => e.currentTarget.style.background = '#ef4444'}
+              >
+                Clear Filter
+              </button>
+            </div>
+          )}
+
+          {loading ? (
+            <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div className="shimmer-loading" style={{ width: '32px', height: '32px', borderRadius: '8px', flexShrink: 0 }} />
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div className="shimmer-loading" style={{ width: '45%', height: '12px', borderRadius: '4px' }} />
+                    <div className="shimmer-loading" style={{ width: '25%', height: '8px', borderRadius: '4px' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : processedBookings.length === 0 ? (
+            <div style={{ padding: '36px 20px', textAlign: 'center', color: '#94a3b8', fontSize: '13px', fontWeight: '500' }}>No bookings found matching the selected filter.</div>
+          ) : (
+            <div style={{ padding: '6px' }}>
+              {processedBookings.slice(0, 5).map((b, i) => {
+                const avatar = getAvatarColor(b.customer_name);
+                const initials = getInitials(b.customer_name);
+                return (
+                  <div key={b.id || b._id}
+                    onClick={() => navigate(`/bookings/view/${b.id || b._id}`)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '10px 14px',
+                      cursor: 'pointer',
+                      borderRadius: '10px',
+                      transition: 'all 0.2s ease',
+                      marginBottom: i < processedBookings.length - 1 ? '3px' : '0'
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = 'rgba(15, 23, 42, 0.03)';
+                      e.currentTarget.style.transform = 'scale(1.01)';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }}>
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '8px',
+                      background: avatar.bg,
+                      color: avatar.text,
+                      border: `1px solid ${avatar.border}`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      fontWeight: '800',
+                      fontSize: '11.5px',
+                      fontFamily: 'Outfit, sans-serif'
+                    }}>
+                      {initials}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: '750', color: '#0f172a', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {b.customer_name}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ color: '#059669', fontWeight: '700', background: 'rgba(5, 150, 105, 0.06)', padding: '1px 5px', borderRadius: '4px' }}>{b.share_code}</span>
+                        <span>&bull;</span>
+                        <span>{b.total_shares} share(s)</span>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px' }}>
+                      <div style={{ fontWeight: '900', color: '#0f172a', fontSize: '13px', fontFamily: 'Outfit, sans-serif' }}>
+                        ₹{Number(b.total_amount || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                      </div>
+                      <div>
+                        {b.is_approved_by_admin === 1 ? (
+                          <span style={{ background: 'rgba(16, 185, 129, 0.08)', color: '#059669', border: '1px solid rgba(16, 185, 129, 0.15)', padding: '2px 6px', borderRadius: '10px', fontSize: '10px', fontWeight: '750', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                            <span style={{ width: '3px', height: '3px', background: '#10b981', borderRadius: '50%' }} /> Approved
+                          </span>
+                        ) : (
+                          <span style={{ background: 'rgba(245, 158, 11, 0.08)', color: '#b45309', border: '1px solid rgba(245, 158, 11, 0.15)', padding: '2px 6px', borderRadius: '10px', fontSize: '10px', fontWeight: '750', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                            <span style={{ width: '3px', height: '3px', background: '#f59e0b', borderRadius: '50%' }} /> Pending
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* System Activity Stream */}
+        {isAdmin && (
+        <div className="list-table-container glass-card" style={{ border: '1px solid rgba(226, 232, 240, 0.8)' }}>
+          <div className="tbl-hero" style={{ padding: '16px 20px 14px' }}>
+            <div className="tbl-hero-left">
+              <div className="tbl-icon" style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #ef4444 0%, #f43f5e 100%)', boxShadow: '0 3px 8px rgba(239, 68, 68, 0.2)' }}>
+                <Activity size={16} />
+              </div>
+              <div>
+                <h3 className="tbl-title" style={{ fontSize: '15px' }}>Live Activity Logs</h3>
+                <p className="tbl-subtitle" style={{ fontSize: '11.5px' }}>System actions history</p>
+              </div>
+            </div>
+          </div>
+          <div className="tbl-divider" />
+          
+          <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {auditLogs.map((log, index) => {
+              const bgBadge = log.type === 'success' ? 'rgba(16, 185, 129, 0.08)' : log.type === 'warning' ? 'rgba(245, 158, 11, 0.08)' : 'rgba(99, 102, 241, 0.08)';
+              const colorText = log.type === 'success' ? '#059669' : log.type === 'warning' ? '#b45309' : '#6366f1';
+              
+              return (
+                <div key={index} 
+                  onClick={() => {
+                    setActiveFilter({ type: 'user', label: `Operator: ${log.user}`, value: log.user });
+                    toast.success(`Filtered bookings by operator: ${log.user}`);
+                  }}
+                  title={`Click to filter bookings by operator: ${log.user}`}
+                  style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '10px 12px', cursor: 'pointer', borderBottom: index < auditLogs.length - 1 ? '1px solid #f1f5f9' : 'none', borderRadius: '8px', transition: 'all 0.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(15, 23, 42, 0.03)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <div style={{
+                    fontSize: '9.5px',
+                    fontWeight: '800',
+                    color: colorText,
+                    background: bgBadge,
+                    padding: '3px 8px',
+                    borderRadius: '8px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    flexShrink: 0,
+                    marginTop: '2px'
+                  }}>
+                    {log.user}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '12px', color: '#334155', fontWeight: '600', lineHeight: '1.4' }}>{log.text}</div>
+                    <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px', fontWeight: '500' }}>{log.time}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        )}
+
+      </div>
+
+      {/* Checklist & Tasks Row */}
+      {isAdmin && (
+      <div className="list-table-container glass-card" style={{ padding: '20px', border: '1px solid rgba(226, 232, 240, 0.8)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.08)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(16, 185, 129, 0.15)' }}>
+            <CheckSquare size={15} />
+          </div>
+          <div>
+            <h4 style={{ margin: 0, fontWeight: '850', fontSize: '14.5px', color: '#1e293b' }}>Pending Admin Checks</h4>
+            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '500' }}>Interactive checklist</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {tasks.map(t => (
+            <div
+              key={t.id}
+              onClick={() => toggleTask(t.id)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '10px 12px',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                background: t.done ? 'rgba(248, 250, 252, 0.6)' : 'rgba(255,255,255,0.8)',
+                border: t.done ? '1px solid #f1f5f9' : '1px solid #e2e8f0',
+                transition: 'all 0.2s'
+              }}
+            >
+              {t.done ? (
+                <CheckSquare size={16} className="text-emerald-500" />
+              ) : (
+                <Square size={16} className="text-slate-400" />
+              )}
+              <span style={{
+                fontSize: '12.5px',
+                fontWeight: '600',
+                color: t.done ? '#94a3b8' : '#334155',
+                textDecoration: t.done ? 'line-through' : 'none',
+                flex: 1
+              }}>
+                {t.text}
+              </span>
+              {!t.done && (
+                <span style={{
+                  fontSize: '9px',
+                  fontWeight: '800',
+                  textTransform: 'uppercase',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  color: t.priority === 'high' ? '#dc2626' : t.priority === 'medium' ? '#d97706' : '#64748b',
+                  background: t.priority === 'high' ? '#fef2f2' : t.priority === 'medium' ? '#fffbeb' : '#f8fafc'
+                }}>
+                  {t.priority}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
       )}
 
       {/* Primary Analytics Section */}
@@ -869,348 +1192,6 @@ const DashboardPage = ({ user }) => {
 
       </div>
 
-      {/* Checklist & Tasks Row */}
-      {isAdmin && (
-      <div className="list-table-container glass-card" style={{ padding: '20px', border: '1px solid rgba(226, 232, 240, 0.8)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.08)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(16, 185, 129, 0.15)' }}>
-            <CheckSquare size={15} />
-          </div>
-          <div>
-            <h4 style={{ margin: 0, fontWeight: '850', fontSize: '14.5px', color: '#1e293b' }}>Pending Admin Checks</h4>
-            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '500' }}>Interactive checklist</span>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {tasks.map(t => (
-            <div
-              key={t.id}
-              onClick={() => toggleTask(t.id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '10px 12px',
-                borderRadius: '12px',
-                cursor: 'pointer',
-                background: t.done ? 'rgba(248, 250, 252, 0.6)' : 'rgba(255,255,255,0.8)',
-                border: t.done ? '1px solid #f1f5f9' : '1px solid #e2e8f0',
-                transition: 'all 0.2s'
-              }}
-            >
-              {t.done ? (
-                <CheckSquare size={16} className="text-emerald-500" />
-              ) : (
-                <Square size={16} className="text-slate-400" />
-              )}
-              <span style={{
-                fontSize: '12.5px',
-                fontWeight: '600',
-                color: t.done ? '#94a3b8' : '#334155',
-                textDecoration: t.done ? 'line-through' : 'none',
-                flex: 1
-              }}>
-                {t.text}
-              </span>
-              
-              {/* Priority Label */}
-              {!t.done && (
-                <span style={{
-                  fontSize: '9px',
-                  fontWeight: '800',
-                  textTransform: 'uppercase',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                  color: t.priority === 'high' ? '#dc2626' : t.priority === 'medium' ? '#d97706' : '#64748b',
-                  background: t.priority === 'high' ? '#fef2f2' : t.priority === 'medium' ? '#fffbeb' : '#f8fafc'
-                }}>
-                  {t.priority}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-      )}
-
-      {/* Quick Access Grid */}
-      <div className="list-table-container glass-card" style={{ border: '1px solid rgba(226, 232, 240, 0.8)' }}>
-        <div className="tbl-hero" style={{ padding: '16px 20px 14px' }}>
-          <div className="tbl-hero-left">
-            <div className="tbl-icon" style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)', boxShadow: '0 3px 8px rgba(99, 102, 241, 0.2)' }}>
-              <LayoutDashboard size={16} />
-            </div>
-            <div>
-              <h3 className="tbl-title" style={{ fontSize: '15px' }}>Quick Actions Panel</h3>
-              <p className="tbl-subtitle" style={{ fontSize: '11.5px' }}>Access critical operations areas</p>
-            </div>
-          </div>
-        </div>
-        <div className="tbl-divider" />
-        <div style={{ padding: '14px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '10px' }}>
-          {quickLinks.map(q => {
-            const Icon = q.icon;
-            return (
-              <div key={q.label} onClick={() => navigate(q.path)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '10px',
-                  padding: '12px',
-                  background: 'rgba(255, 255, 255, 0.5)',
-                  border: '1px solid rgba(226, 232, 240, 0.8)',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                  textAlign: 'left',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.background = q.color + '08';
-                  e.currentTarget.style.borderColor = q.color + '35';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = `0 4px 12px ${q.color}12`;
-                  const arrow = e.currentTarget.querySelector('.tile-arrow');
-                  if (arrow) {
-                    arrow.style.opacity = '1';
-                    arrow.style.transform = 'translateX(3px)';
-                  }
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.5)';
-                  e.currentTarget.style.borderColor = 'rgba(226, 232, 240, 0.8)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
-                  const arrow = e.currentTarget.querySelector('.tile-arrow');
-                  if (arrow) {
-                    arrow.style.opacity = '0';
-                    arrow.style.transform = 'translateX(0)';
-                  }
-                }}
-              >
-                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: q.color + '15', color: q.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: `1px solid ${q.color}20` }}>
-                  <Icon size={14} />
-                </div>
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
-                  <div style={{ fontWeight: '700', fontSize: '12.5px', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{q.label}</span>
-                    <ArrowRight className="tile-arrow" size={12} style={{ opacity: 0, color: q.color, transition: 'all 0.2s ease', flexShrink: 0 }} />
-                  </div>
-                  <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: '500', lineHeight: '1.4' }}>{q.desc}</div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Two-Column Bottom Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '18px' }}>
-        
-        {/* Recent Bookings Feed */}
-        <div className="list-table-container glass-card" style={{ border: '1px solid rgba(226, 232, 240, 0.8)' }}>
-          <div className="tbl-hero" style={{ padding: '16px 20px 14px' }}>
-            <div className="tbl-hero-left">
-              <div className="tbl-icon" style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', boxShadow: '0 3px 8px rgba(16, 185, 129, 0.2)' }}>
-                <ClipboardList size={16} />
-              </div>
-              <div>
-                <h3 className="tbl-title" style={{ fontSize: '15px' }}>Recent Bookings</h3>
-                <p className="tbl-subtitle" style={{ fontSize: '11.5px' }}>Latest bookings feed</p>
-              </div>
-            </div>
-            <div className="tbl-hero-right">
-              <button 
-                onClick={() => {
-                  const navState = {};
-                  if (activeFilter.type === 'payment') {
-                    navState.paymentMode = activeFilter.value === 'cash' ? 'Cash' : activeFilter.value === 'online' ? 'Online' : 'Cheque';
-                  } else if (activeFilter.type === 'share_code') {
-                    navState.searchTerm = activeFilter.value;
-                  } else if (activeFilter.type === 'status') {
-                    navState.filterStatus = activeFilter.value;
-                  }
-                  navigate('/bookings/list', { state: navState });
-                }} 
-                style={{ fontSize: '11px', fontWeight: '800', color: '#059669', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px', padding: '4px 8px', borderRadius: '8px', transition: 'all 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(16, 185, 129, 0.08)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'none'}>
-                View All <ArrowRight size={11} />
-              </button>
-            </div>
-          </div>
-          <div className="tbl-divider" />
-          
-          {/* Active Filter Banner */}
-          {activeFilter.type !== 'all' && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '10px 16px', background: 'rgba(16, 185, 129, 0.06)', borderBottom: '1px solid rgba(16, 185, 129, 0.12)' }}>
-              <span style={{ fontSize: '12px', color: '#059669', fontWeight: '750' }}>
-                Active Filter: {activeFilter.label}
-              </span>
-              <button 
-                onClick={() => {
-                  setActiveFilter({ type: 'all', label: '', value: null });
-                  toast.success("Filter cleared");
-                }}
-                style={{ background: '#ef4444', color: '#ffffff', border: 'none', borderRadius: '6px', padding: '3px 9px', fontSize: '10px', fontWeight: '800', cursor: 'pointer', transition: 'background 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.background = '#dc2626'}
-                onMouseLeave={e => e.currentTarget.style.background = '#ef4444'}
-              >
-                Clear Filter
-              </button>
-            </div>
-          )}
-
-          {loading ? (
-            <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div className="shimmer-loading" style={{ width: '32px', height: '32px', borderRadius: '8px', flexShrink: 0 }} />
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <div className="shimmer-loading" style={{ width: '45%', height: '12px', borderRadius: '4px' }} />
-                    <div className="shimmer-loading" style={{ width: '25%', height: '8px', borderRadius: '4px' }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : processedBookings.length === 0 ? (
-            <div style={{ padding: '36px 20px', textAlign: 'center', color: '#94a3b8', fontSize: '13px', fontWeight: '500' }}>No bookings found matching the selected filter.</div>
-          ) : (
-            <div style={{ padding: '6px' }}>
-              {processedBookings.slice(0, 5).map((b, i) => {
-                const avatar = getAvatarColor(b.customer_name);
-                const initials = getInitials(b.customer_name);
-                return (
-                  <div key={b.id || b._id}
-                    onClick={() => navigate(`/bookings/view/${b.id || b._id}`)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      padding: '10px 14px',
-                      cursor: 'pointer',
-                      borderRadius: '10px',
-                      transition: 'all 0.2s ease',
-                      marginBottom: i < processedBookings.length - 1 ? '3px' : '0'
-                    }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.background = 'rgba(15, 23, 42, 0.03)';
-                      e.currentTarget.style.transform = 'scale(1.01)';
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.transform = 'scale(1)';
-                    }}>
-                    <div style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '8px',
-                      background: avatar.bg,
-                      color: avatar.text,
-                      border: `1px solid ${avatar.border}`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      fontWeight: '800',
-                      fontSize: '11.5px',
-                      fontFamily: 'Outfit, sans-serif'
-                    }}>
-                      {initials}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: '750', color: '#0f172a', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {b.customer_name}
-                      </div>
-                      <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <span style={{ color: '#059669', fontWeight: '700', background: 'rgba(5, 150, 105, 0.06)', padding: '1px 5px', borderRadius: '4px' }}>{b.share_code}</span>
-                        <span>&bull;</span>
-                        <span>{b.total_shares} share(s)</span>
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px' }}>
-                      <div style={{ fontWeight: '900', color: '#0f172a', fontSize: '13px', fontFamily: 'Outfit, sans-serif' }}>
-                        ₹{Number(b.total_amount || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                      </div>
-                      <div>
-                        {b.is_approved_by_admin === 1 ? (
-                          <span style={{ background: 'rgba(16, 185, 129, 0.08)', color: '#059669', border: '1px solid rgba(16, 185, 129, 0.15)', padding: '2px 6px', borderRadius: '10px', fontSize: '10px', fontWeight: '750', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                            <span style={{ width: '3px', height: '3px', background: '#10b981', borderRadius: '50%' }} /> Approved
-                          </span>
-                        ) : (
-                          <span style={{ background: 'rgba(245, 158, 11, 0.08)', color: '#b45309', border: '1px solid rgba(245, 158, 11, 0.15)', padding: '2px 6px', borderRadius: '10px', fontSize: '10px', fontWeight: '750', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                            <span style={{ width: '3px', height: '3px', background: '#f59e0b', borderRadius: '50%' }} /> Pending
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* System Activity Stream */}
-        {isAdmin && (
-        <div className="list-table-container glass-card" style={{ border: '1px solid rgba(226, 232, 240, 0.8)' }}>
-          <div className="tbl-hero" style={{ padding: '16px 20px 14px' }}>
-            <div className="tbl-hero-left">
-              <div className="tbl-icon" style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #ef4444 0%, #f43f5e 100%)', boxShadow: '0 3px 8px rgba(239, 68, 68, 0.2)' }}>
-                <Activity size={16} />
-              </div>
-              <div>
-                <h3 className="tbl-title" style={{ fontSize: '15px' }}>Live Activity Logs</h3>
-                <p className="tbl-subtitle" style={{ fontSize: '11.5px' }}>System actions history</p>
-              </div>
-            </div>
-          </div>
-          <div className="tbl-divider" />
-          
-          <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {auditLogs.map((log, index) => {
-              const bgBadge = log.type === 'success' ? 'rgba(16, 185, 129, 0.08)' : log.type === 'warning' ? 'rgba(245, 158, 11, 0.08)' : 'rgba(99, 102, 241, 0.08)';
-              const colorText = log.type === 'success' ? '#059669' : log.type === 'warning' ? '#b45309' : '#6366f1';
-              
-              return (
-                <div key={index} 
-                  onClick={() => {
-                    setActiveFilter({ type: 'user', label: `Operator: ${log.user}`, value: log.user });
-                    toast.success(`Filtered bookings by operator: ${log.user}`);
-                  }}
-                  title={`Click to filter bookings below by operator: ${log.user}`}
-                  style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '10px 12px', cursor: 'pointer', borderBottom: index < auditLogs.length - 1 ? '1px solid #f1f5f9' : 'none', borderRadius: '8px', transition: 'all 0.2s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(15, 23, 42, 0.03)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                  <div style={{
-                    fontSize: '9.5px',
-                    fontWeight: '800',
-                    color: colorText,
-                    background: bgBadge,
-                    padding: '3px 8px',
-                    borderRadius: '8px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    flexShrink: 0,
-                    marginTop: '2px'
-                  }}>
-                    {log.user}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '12px', color: '#334155', fontWeight: '600', lineHeight: '1.4' }}>{log.text}</div>
-                    <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px', fontWeight: '500' }}>{log.time}</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        )}
-
-      </div>
 
     </div>
   );
